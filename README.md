@@ -2,9 +2,7 @@
 
 A comprehensive security assessment tool for AWS environments that analyzes your cloud infrastructure and provides detailed security findings with remediation guidance.
 
-🆕 **Now available in two versions:**
-- **Modular Architecture** (`aws_security_tool.py`) - Recommended for new users
-- **Original Version** (`aws_security_posture_tool.py`) - Legacy monolithic version
+Built with a **modular architecture** for better maintainability, performance, and extensibility.
 
 ## ✨ Features
 
@@ -23,7 +21,7 @@ A comprehensive security assessment tool for AWS environments that analyzes your
 ```
 AWS-Security-Assessment-tool/
 │
-├── aws_security_analyzer/           # 🆕 Modular package
+├── aws_security_analyzer/           # Modular package
 │   ├── __init__.py                 # Package exports
 │   ├── models.py                   # Data models
 │   ├── config.py                   # Configuration
@@ -34,8 +32,7 @@ AWS-Security-Assessment-tool/
 │   ├── compliance_checker.py      # Compliance checking
 │   └── main_analyzer.py           # Main coordinator
 │
-├── aws_security_tool.py           # 🆕 Modern CLI (Recommended)
-├── aws_security_posture_tool.py   # Legacy monolithic version
+├── aws_security_tool.py           # Main CLI interface
 ├── requirements.txt               # Dependencies
 └── README.md                      # This file
 ```
@@ -64,7 +61,7 @@ aws configure --profile your-profile-name
 
 ## 📖 Usage
 
-### 🌟 Recommended: Modern Modular CLI
+### Command Line Interface
 
 ```bash
 # Basic usage
@@ -80,13 +77,6 @@ python aws_security_tool.py --output csv --filename security-report-2024
 python aws_security_tool.py --verbose
 ```
 
-### Legacy CLI (Still Supported)
-
-```bash
-# Original version still works
-python aws_security_posture_tool.py --profile my-profile
-```
-
 ### 📋 Command Line Options
 
 | Option | Short | Description | Default |
@@ -99,7 +89,7 @@ python aws_security_posture_tool.py --profile my-profile
 
 ### 🐍 Programmatic Usage
 
-#### Modern Modular API (Recommended)
+#### Main API
 ```python
 from aws_security_analyzer import AWSSecurityAnalyzer
 
@@ -129,15 +119,6 @@ iam_analyzer = IAMAnalyzer(session, cred_manager)
 
 # Run specific analysis
 iam_results = iam_analyzer.analyze_iam_security()
-```
-
-#### Legacy API (Still Supported)
-```python
-from aws_security_posture_tool import AWSSecurityAnalyzer
-
-# Same interface as before
-analyzer = AWSSecurityAnalyzer(profile_name='my-profile')
-results = analyzer.run_full_assessment()
 ```
 
 ## Security Checks
@@ -282,7 +263,7 @@ export AWS_PROFILE=my-profile
 export AWS_DEFAULT_REGION=us-east-1
 ```
 
-### Custom Configuration (Modular Version)
+### Custom Configuration
 ```python
 # Modify aws_security_analyzer/config.py
 ACCESS_KEY_UNUSED_DAYS = 60  # Instead of default 90
@@ -293,7 +274,7 @@ POLICY_HIGH_RISK_THRESHOLD = 9  # Instead of default 8
 
 ### Parallel Analysis
 ```bash
-# The modular version automatically runs analyses in parallel
+# Automatically runs analyses in parallel across multiple regions
 python aws_security_tool.py --regions us-east-1 us-west-2 eu-west-1 eu-central-1
 ```
 
@@ -314,16 +295,16 @@ The tool returns different exit codes based on risk level:
 
 ## 🏗️ Architecture Benefits
 
-### Modular vs Monolithic
+### Modular Design Advantages
 
-| Aspect | Legacy Version | Modular Version |
-|--------|---------------|-----------------|
-| **File Structure** | Single 1000+ line file | 9 focused modules (50-200 lines each) |
-| **Maintainability** | Difficult | Easy |
-| **Testing** | Hard to unit test | Each module testable |
-| **Performance** | Good | Better (optimized caching) |
-| **Extensibility** | Monolithic changes | Plugin-like additions |
-| **Code Reuse** | None | Individual modules usable |
+| Aspect | Benefits |
+|--------|----------|
+| **File Structure** | 9 focused modules (50-200 lines each) instead of monolithic code |
+| **Maintainability** | Easy to understand and modify individual components |
+| **Testing** | Each module can be unit tested independently |
+| **Performance** | Optimized with credential caching and parallel processing |
+| **Extensibility** | Plugin-like architecture for adding new analyzers |
+| **Code Reuse** | Individual modules can be used separately |
 
 ### Performance Improvements
 - **Credential Report Caching**: 5-minute cache reduces API calls
@@ -331,21 +312,15 @@ The tool returns different exit codes based on risk level:
 - **Optimized Imports**: Faster startup time
 - **Memory Efficiency**: Better garbage collection
 
-## 🚀 Migration Guide
+## 🚀 Getting Started
 
-### From Legacy to Modular
-
-**No Breaking Changes** - Both versions work identically:
-
+### Basic Usage
 ```bash
-# Old way (still works)
-python aws_security_posture_tool.py --profile test
-
-# New way (recommended)
-python aws_security_tool.py --profile test
+# Run security assessment
+python aws_security_tool.py --profile my-profile
 ```
 
-**New Capabilities** - Modular version adds:
+### Advanced Capabilities
 ```python
 # Use individual components
 from aws_security_analyzer import NetworkAnalyzer
@@ -400,7 +375,7 @@ Top Security Recommendations:
 
 ### Common Issues
 
-**Import Errors (Modular Version)**
+**Import Errors**
 ```bash
 # Ensure you're in the project directory
 cd AWS-Security-Assessment-tool
@@ -420,7 +395,7 @@ python aws_security_tool.py --verbose
 
 ## 🤝 Contributing
 
-### Adding New Analyzers (Modular Version)
+### Adding New Analyzers
 
 1. Create new analyzer file:
 ```python
@@ -452,15 +427,15 @@ from .s3_analyzer import S3Analyzer
 
 ## 📈 Changelog
 
-### Version 2.0.0 (Latest - Modular)
+### Version 2.0.0 (Current)
 - 🆕 **Modular Architecture**: Separated into focused modules
 - 🚀 **Performance**: 5-minute credential report caching
 - 🔧 **Configuration**: Centralized settings in config.py
 - 🧪 **Testability**: Individual modules can be unit tested
 - 📦 **Packaging**: Proper Python package structure
-- 🔄 **Backwards Compatibility**: Legacy version still supported
+- ⚡ **Parallel Processing**: Concurrent analysis across regions
 
-### Version 1.0.0 (Legacy)
+### Version 1.0.0
 - Initial release with comprehensive security analysis
 - Support for multi-region assessment
 - CIS benchmark compliance checking
@@ -496,4 +471,4 @@ This tool is provided as-is for security assessment purposes. Users are responsi
 
 ---
 
-**🌟 Recommended**: Use the modular version (`aws_security_tool.py`) for better performance, maintainability, and future updates!
+**🌟 Built with modular architecture** for better performance, maintainability, and extensibility!
