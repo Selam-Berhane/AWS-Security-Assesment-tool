@@ -496,7 +496,6 @@ from .s3_analyzer import S3Analyzer
 ## 📞 Support
 
 ### Getting Help
-- 📖 Check [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for detailed architecture
 - 🐛 Enable `--verbose` for debugging
 - 📋 Review individual module documentation
 
@@ -512,9 +511,6 @@ from .s3_analyzer import S3Analyzer
 4. Add appropriate tests
 5. Submit a pull request
 
-## ⚖️ License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## ⚠️ Disclaimer
 
