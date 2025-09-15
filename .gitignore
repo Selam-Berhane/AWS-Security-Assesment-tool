@@ -1,7 +1,6 @@
 FUNCTION_DOCUMENTATION.md
 REFACTORING_SUMMARY.md
 PROJECT_STRUCTURE.md
-*.json
 aws-security-env/*
 __pycache__/
 *.py[cod]

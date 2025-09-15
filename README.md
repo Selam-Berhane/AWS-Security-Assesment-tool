@@ -33,6 +33,7 @@ AWS-Security-Assessment-tool/
 │   └── main_analyzer.py           # Main coordinator
 │
 ├── aws_security_tool.py           # Main CLI interface
+├── iam-policy.json                # Required IAM permissions
 ├── requirements.txt               # Dependencies
 └── README.md                      # This file
 ```
@@ -204,9 +205,63 @@ Comprehensive visual report with:
 - botocore >= 1.29.0
 - Valid AWS credentials with appropriate permissions
 
-## Required AWS Permissions
+## 🔐 Required AWS Permissions
 
-The tool requires the following AWS permissions:
+The tool requires specific IAM permissions to perform security analysis. You can use the provided IAM policy file or create a custom policy.
+
+### Quick Setup
+```bash
+# Use the provided IAM policy file
+aws iam create-policy \
+  --policy-name AWSSecurityAnalyzerPolicy \
+  --policy-document file://iam-policy.json
+
+# Attach to user or role
+aws iam attach-user-policy \
+  --user-name your-username \
+  --policy-arn arn:aws:iam::ACCOUNT-ID:policy/AWSSecurityAnalyzerPolicy
+```
+
+### Fine-Grained Permissions (Least Privilege)
+The tool uses a fine-grained IAM policy with specific conditions and resource restrictions:
+
+#### 🎯 Core Identity
+- `sts:GetCallerIdentity` - Get current AWS account information
+
+#### 🔐 IAM Analysis (Scoped)
+- **Account-Level**: `iam:GenerateCredentialReport`, `iam:GetCredentialReport`, `iam:GetAccountPasswordPolicy`
+- **User-Specific**: Limited to `arn:aws:iam::*:user/*` resources only
+- **Customer Policies Only**: `iam:ListPolicies` with condition `"iam:PolicyScope": "Local"`
+- **Policy Analysis**: Restricted to customer-managed policies only
+
+#### 🌐 Network Security (Essential Only)
+- `ec2:DescribeSecurityGroups` - Security group rule analysis
+- `ec2:DescribeVpcs` - VPC configuration check
+- `ec2:DescribeFlowLogs` - Flow logs verification
+- `ec2:DescribeVolumes` - EBS encryption status
+- `ec2:DescribeInstances` - Only for security group mapping
+- `ec2:DescribeAddresses` - Unattached EIP detection
+
+#### 🛡️ Security Services (Status Only)
+- **GuardDuty**: `guardduty:ListDetectors`, `guardduty:GetDetector`
+- **Config**: `config:DescribeConfigurationRecorders`
+- **CloudTrail**: `cloudtrail:DescribeTrails`
+
+#### 🗄️ Database & Storage (Minimal)
+- **RDS**: `rds:DescribeDBInstances` - Public accessibility check only
+- **S3**: `s3:GetBucketPublicAccessBlock`, `s3:ListAllMyBuckets` - Public access analysis
+
+### Security Considerations
+- ✅ **Fine-Grained Access**: Uses specific resource ARNs and conditions where possible
+- ✅ **Customer Policies Only**: IAM policy analysis limited to customer-managed policies
+- ✅ **No AWS Managed Policies**: Cannot access AWS-managed policy documents
+- ✅ **User-Scoped IAM**: IAM user operations limited to user resources only
+- ✅ **Read-Only Permissions**: Cannot modify any AWS resources
+- ✅ **Audit Trail**: All API calls logged in CloudTrail
+- ✅ **Minimal Footprint**: Only essential permissions for each analysis type
+
+### Custom Policy Creation
+If you prefer to create a minimal policy, here's the essential permissions:
 
 ```json
 {
@@ -215,6 +270,9 @@ The tool requires the following AWS permissions:
     {
       "Effect": "Allow",
       "Action": [
+        "sts:GetCallerIdentity",
+        "iam:GenerateCredentialReport",
+        "iam:GetCredentialReport",
         "iam:List*",
         "iam:Get*",
         "ec2:Describe*",
@@ -223,8 +281,7 @@ The tool requires the following AWS permissions:
         "guardduty:Get*",
         "config:Describe*",
         "cloudtrail:Describe*",
-        "sts:GetCallerIdentity",
-        "s3:GetBucketPublicAccessBlock"
+        "s3:GetBucket*"
       ],
       "Resource": "*"
     }
@@ -232,12 +289,6 @@ The tool requires the following AWS permissions:
 }
 ```
 
-## Security Considerations
-
-- The tool only requires read permissions and does not modify any AWS resources
-- Credentials are handled securely through boto3 session management
-- All API calls are logged for audit purposes
-- No sensitive data is exposed in output files
 
 ## Contributing
 

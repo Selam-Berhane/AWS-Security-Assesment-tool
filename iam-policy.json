@@ -1,0 +1,130 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CoreIdentityAccess",
+      "Effect": "Allow",
+      "Action": [
+        "sts:GetCallerIdentity"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMAccountLevelAnalysis",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GenerateCredentialReport",
+        "iam:GetCredentialReport",
+        "iam:GetAccountPasswordPolicy",
+        "iam:GetAccountSummary",
+        "iam:ListUsers"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMUserSpecificAnalysis",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetLoginProfile",
+        "iam:GetUser",
+        "iam:ListAccessKeys",
+        "iam:ListMFADevices",
+        "iam:GetAccessKeyLastUsed"
+      ],
+      "Resource": [
+        "arn:aws:iam::*:user/*"
+      ]
+    },
+    {
+      "Sid": "IAMCustomerManagedPoliciesOnly",
+      "Effect": "Allow",
+      "Action": [
+        "iam:ListPolicies"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "iam:PolicyScope": "Local"
+        }
+      }
+    },
+    {
+      "Sid": "IAMPolicyDocumentAnalysis",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion"
+      ],
+      "Resource": [
+        "arn:aws:iam::*:policy/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "iam:PolicyScope": "Local"
+        }
+      }
+    },
+    {
+      "Sid": "EC2SecurityAnalysis",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeVpcs",
+        "ec2:DescribeFlowLogs",
+        "ec2:DescribeVolumes",
+        "ec2:DescribeAddresses"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EC2InstancesForSecurityGroupMapping",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "RDSPublicAccessibilityCheck",
+      "Effect": "Allow",
+      "Action": [
+        "rds:DescribeDBInstances"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "GuardDutyStatusCheck",
+      "Effect": "Allow",
+      "Action": [
+        "guardduty:ListDetectors",
+        "guardduty:GetDetector"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AWSConfigStatusCheck",
+      "Effect": "Allow",
+      "Action": [
+        "config:DescribeConfigurationRecorders"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudTrailStatusCheck",
+      "Effect": "Allow",
+      "Action": [
+        "cloudtrail:DescribeTrails"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "S3PublicAccessAnalysis",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetBucketPublicAccessBlock",
+        "s3:ListAllMyBuckets"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
