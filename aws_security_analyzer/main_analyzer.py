@@ -104,6 +104,10 @@ class AWSSecurityAnalyzer:
                     try:
                         result = future.result()
                         assessment_results[analysis_type] = result
+
+                        # Convert analysis results to SecurityFinding objects
+                        self._process_analysis_findings(analysis_type, result)
+
                         logger.info(f"Completed {analysis_type}")
                     except Exception as e:
                         logger.error(f"{analysis_type} failed: {e}")
@@ -159,6 +163,164 @@ class AWSSecurityAnalyzer:
         )
         self.findings.append(finding)
         logger.debug(f"Added {severity} finding: {finding_type} for {resource_type}::{resource_id}")
+
+    def _process_analysis_findings(self, analysis_type: str, result: Dict[str, Any]) -> None:
+        """Convert analysis results to SecurityFinding objects"""
+        try:
+            if analysis_type == 'iam_analysis':
+                self._process_iam_findings(result)
+            elif analysis_type == 'network_analysis':
+                self._process_network_findings(result)
+            elif analysis_type == 'security_services':
+                self._process_security_services_findings(result)
+            elif analysis_type == 'compliance_check':
+                self._process_compliance_findings(result)
+        except Exception as e:
+            logger.error(f"Failed to process findings for {analysis_type}: {e}")
+
+    def _process_iam_findings(self, result: Dict[str, Any]) -> None:
+        """Process IAM analysis findings"""
+        # Users without MFA
+        for username in result.get('users_without_mfa', []):
+            self.add_finding(
+                severity="HIGH",
+                resource_type="IAM::User",
+                resource_id=username,
+                finding_type="MFA_NOT_ENABLED",
+                description=f"User {username} has console access but no MFA enabled",
+                remediation="Enable MFA for this user account"
+            )
+
+        # Unused access keys
+        for key_info in result.get('unused_access_keys', []):
+            self.add_finding(
+                severity="MEDIUM",
+                resource_type="IAM::AccessKey",
+                resource_id=key_info.get('key_id', 'unknown'),
+                finding_type="UNUSED_ACCESS_KEY",
+                description=f"Access key {key_info.get('key_id')} for user {key_info.get('user')} appears unused",
+                remediation="Consider deactivating or deleting unused access keys"
+            )
+
+        # Overprivileged policies
+        for policy_info in result.get('overprivileged_policies', []):
+            severity = "HIGH" if policy_info.get('risk_score', 0) > 8 else "MEDIUM"
+            self.add_finding(
+                severity=severity,
+                resource_type="IAM::Policy",
+                resource_id=policy_info.get('policy_name', 'unknown'),
+                finding_type="OVERPRIVILEGED_POLICY",
+                description=f"Policy {policy_info.get('policy_name')} has high privilege risk (score: {policy_info.get('risk_score')})",
+                remediation="Review and apply principle of least privilege"
+            )
+
+    def _process_network_findings(self, result: Dict[str, Any]) -> None:
+        """Process network analysis findings"""
+        # Open security groups
+        for sg_info in result.get('open_security_groups', []):
+            self.add_finding(
+                severity="HIGH",
+                resource_type="EC2::SecurityGroup",
+                resource_id=sg_info.get('group_id', 'unknown'),
+                finding_type="OVERLY_PERMISSIVE_SG",
+                description=f"Security group {sg_info.get('group_id')} has overly permissive rules",
+                remediation="Restrict access to specific IP ranges and ports",
+                region=sg_info.get('region', 'unknown')
+            )
+
+        # Unencrypted EBS volumes
+        for volume_info in result.get('unencrypted_ebs_volumes', []):
+            self.add_finding(
+                severity="MEDIUM",
+                resource_type="EC2::Volume",
+                resource_id=volume_info.get('volume_id', 'unknown'),
+                finding_type="UNENCRYPTED_EBS",
+                description=f"EBS volume {volume_info.get('volume_id')} is not encrypted",
+                remediation="Enable EBS encryption for data at rest protection",
+                region=volume_info.get('region', 'unknown')
+            )
+
+        # Public RDS instances
+        for db_info in result.get('public_rds_instances', []):
+            self.add_finding(
+                severity="HIGH",
+                resource_type="RDS::DBInstance",
+                resource_id=db_info.get('db_identifier', 'unknown'),
+                finding_type="PUBLIC_RDS_INSTANCE",
+                description=f"RDS instance {db_info.get('db_identifier')} is publicly accessible",
+                remediation="Disable public accessibility for RDS instances",
+                region=db_info.get('region', 'unknown')
+            )
+
+        # VPC flow logs disabled
+        for vpc_info in result.get('vpc_flow_logs_disabled', []):
+            self.add_finding(
+                severity="MEDIUM",
+                resource_type="EC2::VPC",
+                resource_id=vpc_info.get('vpc_id', 'unknown'),
+                finding_type="FLOW_LOGS_DISABLED",
+                description=f"VPC {vpc_info.get('vpc_id')} does not have flow logs enabled",
+                remediation="Enable VPC Flow Logs for network monitoring",
+                region=vpc_info.get('region', 'unknown')
+            )
+
+    def _process_security_services_findings(self, result: Dict[str, Any]) -> None:
+        """Process security services findings"""
+        # GuardDuty status
+        guardduty_status = result.get('guardduty_status', {})
+        for region, status in guardduty_status.items():
+            if not status.get('enabled', False):
+                self.add_finding(
+                    severity="HIGH",
+                    resource_type="GuardDuty::Detector",
+                    resource_id=f"guardduty-{region}",
+                    finding_type="GUARDDUTY_DISABLED",
+                    description=f"GuardDuty is not enabled in region {region}",
+                    remediation="Enable GuardDuty for threat detection",
+                    region=region
+                )
+
+        # AWS Config status
+        config_status = result.get('config_status', {})
+        for region, status in config_status.items():
+            if not status.get('enabled', False):
+                self.add_finding(
+                    severity="MEDIUM",
+                    resource_type="Config::ConfigurationRecorder",
+                    resource_id=f"config-{region}",
+                    finding_type="CONFIG_DISABLED",
+                    description=f"AWS Config is not enabled in region {region}",
+                    remediation="Enable AWS Config for compliance monitoring",
+                    region=region
+                )
+
+        # CloudTrail status
+        cloudtrail_status = result.get('cloudtrail_status', {})
+        if not cloudtrail_status.get('has_global_logging', False):
+            self.add_finding(
+                severity="HIGH",
+                resource_type="CloudTrail::Trail",
+                resource_id="cloudtrail-global",
+                finding_type="NO_GLOBAL_CLOUDTRAIL",
+                description="No multi-region CloudTrail is configured",
+                remediation="Configure a multi-region CloudTrail for comprehensive logging",
+                region="global"
+            )
+
+    def _process_compliance_findings(self, result: Dict[str, Any]) -> None:
+        """Process compliance check findings"""
+        cis_benchmarks = result.get('cis_benchmarks', {})
+        for check_name, check_result in cis_benchmarks.items():
+            if not check_result.get('compliant', False):
+                self.add_finding(
+                    severity=check_result.get('severity', 'MEDIUM'),
+                    resource_type="Compliance::Check",
+                    resource_id=check_name,
+                    finding_type="COMPLIANCE_VIOLATION",
+                    description=check_result.get('description', f'Failed compliance check: {check_name}'),
+                    remediation=check_result.get('remediation', 'Review and implement compliance requirements'),
+                    region="global"
+                )
 
     def _generate_summary(self) -> Dict[str, Any]:
         """Generate assessment summary"""
